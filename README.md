@@ -77,7 +77,7 @@ for the complete file tree and the reasoning behind this layout.
 
 ### Prerequisites
 
-Node.js 18+ and npm.
+Node.js 22.12+ and npm (Electron 44 and several native dependencies require it — see `.nvmrc`).
 
 ### Installation
 
