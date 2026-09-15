@@ -1,0 +1,14 @@
+{
+  "classes": [
+    "none",
+    "Center",
+    "Donut",
+    "Edge-Loc",
+    "Edge-Ring",
+    "Loc",
+    "Random",
+    "Scratch",
+    "Near-full"
+  ],
+  "imgSize": 32
+}
