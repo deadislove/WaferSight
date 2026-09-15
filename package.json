@@ -2,6 +2,18 @@
   "name": "wafersight",
   "private": true,
   "version": "0.0.0",
+  "description": "Local-first Electron desktop app for AI-assisted semiconductor wafer quality inspection — 3D wafer/die visualization, local ONNX defect classification, SPC monitoring, and a self-improving human-in-the-loop calibration layer.",
+  "keywords": [
+    "electron",
+    "react",
+    "typescript",
+    "semiconductor",
+    "wafer",
+    "quality-inspection",
+    "spc",
+    "onnxruntime",
+    "sqlite"
+  ],
   "main": "dist-electron/main.js",
   "type": "module",
   "license": "MIT",
@@ -10,6 +22,14 @@
     "email": "dawei.lin7689@gmail.com",
     "url": "https://www.linkedin.com/in/da-wei-lin-689a35107/"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deadislove/WaferSight.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deadislove/WaferSight/issues"
+  },
+  "homepage": "https://github.com/deadislove/WaferSight#readme",
   "scripts": {
     "predev": "rimraf dist dist-electron",
     "dev": "concurrently \"vite build --watch\" \"wait-on dist-electron/main.js && electron .\"",

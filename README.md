@@ -144,6 +144,10 @@ The dataset itself is not included in this repository (see
 for how to obtain it and reproduce training) — only the exported `.onnx`
 model artifact ships with the app.
 
+## Changelog
+
+See [`CHANGELOG.md`](./CHANGELOG.md) for notable changes.
+
 ## Contributing
 
 Contributions are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for
