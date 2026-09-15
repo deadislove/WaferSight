@@ -1,7 +1,7 @@
 // src/pages/subpages/quality/defectDetectionPage.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQualityData } from '../../../contexts/qualityDataContext';
+import { useQualityData } from '../../../contexts/useQualityData';
 import { getDiesForWafer } from '../../../services/quality/lotFoundationService';
 import {
   classifyWaferPattern,
@@ -18,6 +18,7 @@ import {
 import { autoSubmitFeedbackForSync } from '../../../services/quality/autoFeedbackService';
 import { exportServices } from '../../../services/export/exportServices';
 import type { QualityWaferRow, CalibrationStateData } from '../../../vite-env';
+import { getErrorMessage } from '../../../utils/errorMessage';
 
 const PATTERN_KEYS = ['none', 'Center', 'Donut', 'Edge-Loc', 'Edge-Ring', 'Loc', 'Random', 'Scratch', 'Near-full'];
 
@@ -29,7 +30,12 @@ interface WaferResult {
 export default function DefectDetectionPage() {
   const { t } = useTranslation();
   const { wafers, lastSyncedAt } = useQualityData();
-  const [selectedWaferId, setSelectedWaferId] = useState('');
+  // No effect needed to default/reset the selection when `wafers` changes —
+  // derived directly during render (falls back to the first wafer whenever
+  // the manually picked one isn't in the current list, e.g. on first load).
+  const [manualWaferId, setManualWaferId] = useState<string | null>(null);
+  const selectedWaferId =
+    manualWaferId && wafers.some((w) => w.id === manualWaferId) ? manualWaferId : (wafers[0]?.id ?? '');
   const [allResults, setAllResults] = useState<WaferResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,16 +59,11 @@ export default function DefectDetectionPage() {
 
   useEffect(() => {
     if (wafers.length === 0) return;
-    setSelectedWaferId((current) => (wafers.some((w) => w.id === current) ? current : wafers[0].id));
-  }, [wafers]);
-
-  useEffect(() => {
-    if (wafers.length === 0) return;
     let cancelled = false;
-    setLoading(true);
-    setError('');
 
     (async () => {
+      setLoading(true);
+      setError('');
       try {
         const results: WaferResult[] = [];
         for (const wafer of wafers) {
@@ -76,8 +77,8 @@ export default function DefectDetectionPage() {
         if (!cancelled && submittedCount > 0) {
           setAutoFeedbackCount((c) => c + submittedCount);
         }
-      } catch (err: any) {
-        if (!cancelled) setError(err.message || t('defectDetection.inferenceFailedGeneric'));
+      } catch (err) {
+        if (!cancelled) setError(getErrorMessage(err) || t('defectDetection.inferenceFailedGeneric'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -99,10 +100,18 @@ export default function DefectDetectionPage() {
   const selectedResult = calibratedResults.find((r) => r.wafer.id === selectedWaferId) ?? null;
   const selectedRawResult = allResults.find((r) => r.wafer.id === selectedWaferId) ?? null;
 
-  useEffect(() => {
-    if (selectedResult) setFeedbackLabel(selectedResult.classification.label);
+  // Resets the feedback form whenever the displayed wafer/classification
+  // changes. Adjusted directly during render (React's sanctioned pattern for
+  // "state that should reset when some other value changes") instead of via
+  // an effect, since this is derived UI state, not a sync with an external
+  // system — it does NOT re-run when the user manually edits feedbackLabel.
+  const resultKey = selectedResult ? `${selectedResult.wafer.id}:${selectedResult.classification.label}` : null;
+  const [syncedResultKey, setSyncedResultKey] = useState<string | null>(null);
+  if (resultKey !== syncedResultKey) {
+    setSyncedResultKey(resultKey);
+    setFeedbackLabel(selectedResult ? selectedResult.classification.label : '');
     setFeedbackStatus('idle');
-  }, [selectedResult?.wafer.id, selectedResult?.classification.label]);
+  }
 
   const handleSubmitFeedback = async () => {
     if (!selectedRawResult || !feedbackLabel) return;
@@ -175,7 +184,7 @@ export default function DefectDetectionPage() {
         <div className="flex items-center gap-2">
           <select
             value={selectedWaferId}
-            onChange={(e) => setSelectedWaferId(e.target.value)}
+            onChange={(e) => setManualWaferId(e.target.value)}
             className="px-3 py-1.5 rounded bg-slate-800 border border-slate-700 text-sm text-white"
           >
             {wafers.map((w) => (
@@ -312,7 +321,7 @@ export default function DefectDetectionPage() {
               {calibratedResults.map((r) => (
                 <tr
                   key={r.wafer.id}
-                  onClick={() => setSelectedWaferId(r.wafer.id)}
+                  onClick={() => setManualWaferId(r.wafer.id)}
                   className={`border-b border-slate-700/50 cursor-pointer transition-colors ${
                     r.wafer.id === selectedWaferId ? 'bg-blue-500/10' : 'hover:bg-slate-700/30'
                   }`}

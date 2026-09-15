@@ -1,5 +1,5 @@
 // src/pages/admin/subpages/UserManagePage.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Modal from '../../../components/modal';
 import ErrorModal from '../../../components/errorModal';
@@ -43,11 +43,7 @@ export default function UserManagePage({ currentUser, onForceLogout }: UserManag
 
   const [resetPasswordValue, setResetPasswordValue] = useState('');
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     const res = await getUsersService();
 
@@ -60,7 +56,13 @@ export default function UserManagePage({ currentUser, onForceLogout }: UserManag
       }
     }
     setLoading(false);
-  };
+  }, [t, onForceLogout]);
+
+  useEffect(() => {
+    (async () => {
+      await loadUsers();
+    })();
+  }, [loadUsers]);
 
   const closeModal = () => {
     setModalMode(null);

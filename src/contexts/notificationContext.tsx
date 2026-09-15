@@ -1,23 +1,10 @@
 // src/contexts/notificationContext.tsx
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import ToastStack, { type ToastItem } from '../components/toast';
-import { getInitialAlerts, subscribeToAlerts, type LiveAlert } from '../services/quality/alertsService';
+import { getInitialAlerts, subscribeToAlerts } from '../services/quality/alertsService';
 import { SOURCE_LABEL_KEY } from '../constants/alertLabels';
-
-export interface NotificationItem extends LiveAlert {
-  read: boolean;
-}
-
-interface NotificationContextValue {
-  notifications: NotificationItem[];
-  unreadCount: number;
-  connectionStatus: 'connecting' | 'connected';
-  markRead: (id: string) => void;
-  markAllRead: () => void;
-}
-
-const NotificationContext = createContext<NotificationContextValue | null>(null);
+import { NotificationContext, type NotificationItem } from './useNotifications';
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -78,12 +65,4 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </NotificationContext.Provider>
   );
-}
-
-export function useNotifications(): NotificationContextValue {
-  const ctx = useContext(NotificationContext);
-  if (!ctx) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
-  return ctx;
 }

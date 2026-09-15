@@ -1,12 +1,13 @@
-import { app, BrowserWindow, dialog, ipcMain, net } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'path';
-import db, { initDatabase } from './infra/db';
+import { initDatabase } from './infra/db';
 import { fileURLToPath } from 'url';
 import { registerBackgroundWorker, startBackgroundWorker, checkingDb } from './workers/backgroundWorker';
 import { registerNetworkBackgroundWorker, startNetworkBackgroundWorker } from './workers/networkBackgroundWorker';
 import { createNetStatusTask } from './workers/netStatusWorker';
 import { createCalibrationRetrainTask, markCalibrationRetrainedNow } from './workers/calibrationWorker';
 import { createQualitySyncTask } from './workers/qualitySyncWorker';
+import { getErrorMessage } from './infra/errorMessage';
 // Service
 import { authService } from './services/authService';
 import { userService } from './services/userService';
@@ -16,8 +17,6 @@ import { modelCalibrationService } from './services/modelCalibrationService';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const JWT_SECRET = authService.getJwtSecret();
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -38,7 +37,7 @@ function createWindow() {
         },
     });
 
-    mainWindow.on('close', (e) => {
+    mainWindow.on('close', () => {
         if (isWindowUsable(mainWindow)) {
             mainWindow.webContents.send('force-logout');
         }
@@ -79,10 +78,10 @@ function broadcastNetStatusChanged(isOnline: boolean) {
 app.whenReady().then(() => {
     try {
         initDatabase();
-    } catch (error: any) {
+    } catch (error) {
         dialog.showErrorBox(
             '資料庫初始化失敗 (Database Error)',
-            `系統無法載入或解密本地資料庫。\n\n詳細錯誤原因：\n${error.message}\n\n這通常發生在資料庫加密金鑰不符，或舊資料未清除。應用程式將即將關閉。`
+            `系統無法載入或解密本地資料庫。\n\n詳細錯誤原因：\n${getErrorMessage(error)}\n\n這通常發生在資料庫加密金鑰不符，或舊資料未清除。應用程式將即將關閉。`
         );
     }
 

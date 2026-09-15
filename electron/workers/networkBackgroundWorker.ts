@@ -4,7 +4,7 @@ interface RegisteredNetworkTask {
     fn: (ctx: { hasInternet: boolean }) => void | Promise<void>;
 }
 
-let registeredTasks: RegisteredNetworkTask[] = [];
+const registeredTasks: RegisteredNetworkTask[] = [];
 
 async function checkInternetAccess(): Promise<boolean> {
     try {

@@ -1,7 +1,13 @@
 import Database from "better-sqlite3-multiple-ciphers";
 import bcrypt from 'bcryptjs';
 import dbInstance from '../infra/db';
-import { authService } from './authService';
+import { authService, type TokenPayload } from './authService';
+import { getErrorMessage } from '../infra/errorMessage';
+
+interface UserRow {
+    id: number;
+    role: string;
+}
 
 export class UserService {
     private db:Database.Database;
@@ -28,8 +34,8 @@ export class UserService {
             const users = stmt.all();
 
             return { success: true, data: users };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: getErrorMessage(err) };
         }
     }
 
@@ -66,11 +72,12 @@ export class UserService {
             stmt.run(username, hashedPassword, securityQuestion, hashedAnswer, role);
 
             return { success: true };
-        } catch (err: any) {
-            if (err.message.includes('UNIQUE constraint failed')) {
+        } catch (err) {
+            const message = getErrorMessage(err);
+            if (message?.includes('UNIQUE constraint failed')) {
                 return { success: false, error: '此帳號已被註冊' };
             }
-            return { success: false, error: err.message };
+            return { success: false, error: message };
         }
     }
 
@@ -84,7 +91,7 @@ export class UserService {
         }
 
         try {
-            const target: any = this.db.prepare('SELECT * FROM users WHERE id = ?').get(data.id);
+            const target = this.db.prepare('SELECT * FROM users WHERE id = ?').get(data.id) as UserRow | undefined;
             if (!target) {
                 return { success: false, error: '找不到此使用者' };
             }
@@ -102,8 +109,8 @@ export class UserService {
             }
 
             return { success: true };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: getErrorMessage(err) };
         }
     }
 
@@ -117,12 +124,12 @@ export class UserService {
         }
 
         try {
-            const target: any = this.db.prepare('SELECT * FROM users WHERE id = ?').get(data.id);
+            const target = this.db.prepare('SELECT * FROM users WHERE id = ?').get(data.id) as UserRow | undefined;
             if (!target) {
                 return { success: false, error: '找不到此使用者' };
             }
 
-            const decoded: any = authCheck.decoded;
+            const decoded: TokenPayload = authCheck.decoded;
             if (decoded.id === target.id) {
                 return { success: false, error: '無法對自己的帳號執行此操作' };
             }
@@ -133,8 +140,8 @@ export class UserService {
 
             this.db.prepare('DELETE FROM users WHERE id = ?').run(data.id);
             return { success: true };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: getErrorMessage(err) };
         }
     }
 
@@ -142,9 +149,9 @@ export class UserService {
      * Checks whether the given user is the system's last remaining admin.
      */
     private isLastAdmin(userId: number): boolean {
-        const row: any = this.db
+        const row = this.db
             .prepare("SELECT COUNT(*) as cnt FROM users WHERE role = 'admin' AND id != ?")
-            .get(userId);
+            .get(userId) as { cnt: number };
         return row.cnt === 0;
     }
 }

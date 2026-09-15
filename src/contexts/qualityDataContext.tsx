@@ -1,17 +1,9 @@
 // src/contexts/qualityDataContext.tsx
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { syncQualityData, getWafers, getDiesForWafer, getLastSyncedAt, type QualityWaferRow } from '../services/quality/lotFoundationService';
 import { classifyWaferPattern } from '../services/quality/defectInferenceService';
 import { autoSubmitFeedbackForSync } from '../services/quality/autoFeedbackService';
-
-interface QualityDataContextValue {
-  wafers: QualityWaferRow[];
-  lastSyncedAt: string | null;
-  syncing: boolean;
-  refreshNow: () => Promise<void>;
-}
-
-const QualityDataContext = createContext<QualityDataContextValue | null>(null);
+import { QualityDataContext } from './useQualityData';
 
 export function QualityDataProvider({ children }: { children: ReactNode }) {
   const [wafers, setWafers] = useState<QualityWaferRow[]>([]);
@@ -28,7 +20,10 @@ export function QualityDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    reload(); // main process already syncs on its own startup; just read current state
+    // main process already syncs on its own startup; just read current state
+    (async () => {
+      await reload();
+    })();
 
     getLastSyncedAt()
       .then((syncedAt) => {
@@ -82,12 +77,4 @@ export function QualityDataProvider({ children }: { children: ReactNode }) {
       {children}
     </QualityDataContext.Provider>
   );
-}
-
-export function useQualityData(): QualityDataContextValue {
-  const ctx = useContext(QualityDataContext);
-  if (!ctx) {
-    throw new Error('useQualityData must be used within a QualityDataProvider');
-  }
-  return ctx;
 }

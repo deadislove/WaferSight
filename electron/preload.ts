@@ -1,18 +1,19 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { ElectronAPI } from '../src/vite-env';
 
-contextBridge.exposeInMainWorld('electronAPI', {
-  onNetStatusChange: (callback: (isOnline: boolean) => void) => {
+const electronAPI: ElectronAPI = {
+  onNetStatusChange: (callback) => {
     ipcRenderer.on('net-status-changed', (_, isOnline) => callback(isOnline));
   },
   getUsers: () => {
     const token = localStorage.getItem('jwt_token');
     return ipcRenderer.invoke('get-users', { token });
   },
-  createUser: (data: any) => {
+  createUser: (data) => {
     const token = localStorage.getItem('jwt_token');
     return ipcRenderer.invoke('create-user', { token, ...data });
   },
-  updateUser: (data: any) => {
+  updateUser: (data) => {
     const token = localStorage.getItem('jwt_token');
     return ipcRenderer.invoke('update-user', { token, ...data });
   },
@@ -62,9 +63,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onCalibrationUpdated: (callback: () => void) => {
     ipcRenderer.on('calibration-updated', () => callback());
   },
-  register: (data: any) => ipcRenderer.invoke('auth-register', data),
-  login: (data: any) => ipcRenderer.invoke('auth-login', data),
-  resetPassword: (data: any) => ipcRenderer.invoke('auth-reset-password', data),
+  register: (data) => ipcRenderer.invoke('auth-register', data),
+  login: (data) => ipcRenderer.invoke('auth-login', data),
+  resetPassword: (data) => ipcRenderer.invoke('auth-reset-password', data),
   getSecurityQuestion: (username: string) => ipcRenderer.invoke('get-security-question', username),
   onForceLogout: (callback: () => void) => { ipcRenderer.on('force-logout', () => callback()); },
-});
+};
+
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);

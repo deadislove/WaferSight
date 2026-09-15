@@ -10,6 +10,7 @@ import {
   onCalibrationUpdated,
 } from '../../../services/quality/calibrationService';
 import type { CalibrationStateData } from '../../../vite-env';
+import { getErrorMessage } from '../../../utils/errorMessage';
 
 export default function ModelTuningPage() {
   const { t } = useTranslation();
@@ -54,8 +55,8 @@ export default function ModelTuningPage() {
       });
       setMessage(t('modelTuning.configSaved'));
       load();
-    } catch (err: any) {
-      setMessage(err.message || t('modelTuning.saving'));
+    } catch (err) {
+      setMessage(getErrorMessage(err) || t('modelTuning.saving'));
     } finally {
       setSavingConfig(false);
     }
@@ -72,8 +73,8 @@ export default function ModelTuningPage() {
         setMessage(`${t('modelTuning.retrainDone')}${((result.holdoutAccuracy ?? 0) * 100).toFixed(1)}% (${t('modelTuning.sampleCount')}: ${result.sampleCount})`);
       }
       load();
-    } catch (err: any) {
-      setMessage(err.message || t('modelTuning.retraining'));
+    } catch (err) {
+      setMessage(getErrorMessage(err) || t('modelTuning.retraining'));
     } finally {
       setRetraining(false);
     }
@@ -86,8 +87,8 @@ export default function ModelTuningPage() {
       await resetCalibration();
       setMessage(t('modelTuning.resetDone'));
       load();
-    } catch (err: any) {
-      setMessage(err.message || t('modelTuning.resetting'));
+    } catch (err) {
+      setMessage(getErrorMessage(err) || t('modelTuning.resetting'));
     } finally {
       setResetting(false);
     }

@@ -1,5 +1,6 @@
 // src/services/authService.ts
 import i18n from '../../i18n';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 export interface AuthResult {
   success: boolean;
@@ -20,8 +21,8 @@ export async function getSecurityQuestionService(username: string): Promise<Auth
   try {
     const res = await window.electronAPI.getSecurityQuestion(username);
     return res;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('auth.fetchQuestionRetryGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('auth.fetchQuestionRetryGeneric') };
   }
 }
 
@@ -32,31 +33,31 @@ export async function loginService(credentials: { username: string; password: st
   try {
     const res = await window.electronAPI.login(credentials);
     return res as AuthResult;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('auth.loginFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('auth.loginFailedGeneric') };
   }
 }
 
 /**
  * Registration service.
  */
-export async function registerService(data: any): Promise<AuthResult> {
+export async function registerService(data: Parameters<typeof window.electronAPI.register>[0]): Promise<AuthResult> {
   try {
     const res = await window.electronAPI.register(data);
     return res as AuthResult;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('auth.registerFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('auth.registerFailedGeneric') };
   }
 }
 
 /**
  * Password-reset service.
  */
-export async function resetPasswordService(data: any): Promise<AuthResult> {
+export async function resetPasswordService(data: Parameters<typeof window.electronAPI.resetPassword>[0]): Promise<AuthResult> {
   try {
     const res = await window.electronAPI.resetPassword(data);
     return res as AuthResult;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('auth.resetFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('auth.resetFailedGeneric') };
   }
 }

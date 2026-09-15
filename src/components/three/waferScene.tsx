@@ -303,6 +303,10 @@ export default function WaferScene({ dies, gridSize, colorMode, selectedDieId, o
     });
     if (!foundSelected) state.selectionRing.visible = false;
 
+    // `mesh` is a three.js object living in threeRef, not React-managed
+    // state — flipping `needsUpdate` is the required imperative API for
+    // telling three.js to re-upload GPU buffer data, not a React mutation.
+    // eslint-disable-next-line react-hooks/immutability
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }, [colorMode, selectedDieId, gridSize]);

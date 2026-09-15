@@ -1,4 +1,5 @@
 import type { QualityWaferRow, QualityDieRow } from '../../vite-env';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 export type { QualityWaferRow, QualityDieRow };
 
@@ -18,8 +19,8 @@ export interface SyncResult {
 export async function syncQualityData(): Promise<SyncResult> {
   try {
     return await window.electronAPI.syncQualityData();
-  } catch (err: any) {
-    return { success: false, syncedAt: '', error: err.message || '同步失敗' };
+  } catch (err) {
+    return { success: false, syncedAt: '', error: getErrorMessage(err) || '同步失敗' };
   }
 }
 

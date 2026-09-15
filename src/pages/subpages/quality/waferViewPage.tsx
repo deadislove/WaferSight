@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WaferScene, { type ColorMode, type DieRecord, type DieStatus } from '../../../components/three/waferScene';
 import { getDiesForWafer } from '../../../services/quality/lotFoundationService';
-import { useQualityData } from '../../../contexts/qualityDataContext';
+import { useQualityData } from '../../../contexts/useQualityData';
 import type { QualityDieRow } from '../../../vite-env';
 
 const STATUS_LABEL_KEY: Record<DieStatus, string> = {
@@ -34,23 +34,21 @@ function formatSyncedAt(iso: string | null): string | null {
 export default function WaferViewPage() {
   const { t } = useTranslation();
   const { wafers, lastSyncedAt, syncing, refreshNow } = useQualityData();
-  const [selectedWaferId, setSelectedWaferId] = useState<string>('');
+  // Wafer list comes from the shared data foundation (SQLite); no effect
+  // needed to default/reset the selection — derived directly during render,
+  // falling back to the first wafer whenever the manually picked one isn't
+  // in the current list (e.g. on first load or after a list refresh).
+  const [manualWaferId, setManualWaferId] = useState<string | null>(null);
+  const selectedWaferId =
+    manualWaferId && wafers.some((w) => w.id === manualWaferId) ? manualWaferId : (wafers[0]?.id ?? '');
   const [dies, setDies] = useState<DieRecord[]>([]);
   const [colorMode, setColorMode] = useState<ColorMode>('heatmap');
   const [selectedDie, setSelectedDie] = useState<DieRecord | null>(null);
 
-  // Wafer list comes from the shared data foundation (SQLite); defaults to
-  // the first wafer, and re-selects the first wafer if the previously
-  // selected one no longer exists after a list refresh.
-  useEffect(() => {
-    if (wafers.length === 0) return;
-    setSelectedWaferId((current) => (wafers.some((w) => w.id === current) ? current : wafers[0].id));
-  }, [wafers]);
-
   useEffect(() => {
     if (!selectedWaferId) return;
-    setSelectedDie(null);
     (async () => {
+      setSelectedDie(null);
       try {
         const rows = await getDiesForWafer(selectedWaferId);
         setDies(rows.map(toDieRecord));
@@ -85,7 +83,7 @@ export default function WaferViewPage() {
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={selectedWaferId}
-            onChange={(e) => setSelectedWaferId(e.target.value)}
+            onChange={(e) => setManualWaferId(e.target.value)}
             className="px-3 py-1.5 rounded bg-slate-800 border border-slate-700 text-sm text-white"
           >
             {wafers.map((w) => (

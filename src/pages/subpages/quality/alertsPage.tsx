@@ -1,7 +1,7 @@
 // src/pages/subpages/quality/alertsPage.tsx
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNotifications } from '../../../contexts/notificationContext';
+import { useNotifications } from '../../../contexts/useNotifications';
 import { SEVERITY_DOT, SEVERITY_LABEL_KEY, SEVERITY_TEXT, SOURCE_LABEL_KEY } from '../../../constants/alertLabels';
 import type { LiveAlert } from '../../../services/quality/alertsService';
 

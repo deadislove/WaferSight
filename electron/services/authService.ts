@@ -3,6 +3,22 @@ import bcrypt from 'bcryptjs';
 import Database from 'better-sqlite3-multiple-ciphers';
 import dbInstance from '../infra/db';
 import { getAppConfig } from '../infra/configManager';
+import { getErrorMessage } from '../infra/errorMessage';
+
+export interface TokenPayload {
+    id: number;
+    username: string;
+    role: string;
+}
+
+interface UserRow {
+    id: number;
+    username: string;
+    password: string;
+    security_question: string;
+    security_answer: string;
+    role: string;
+}
 
 export class AuthService {
     private db: Database.Database;
@@ -27,9 +43,9 @@ export class AuthService {
     public verifyToken(token?: string) {
         if (!token) return { valid: false, error: '未提供 Token' };
         try {
-            const decoded = jwt.verify(token, this.jwtSecret);
+            const decoded = jwt.verify(token, this.jwtSecret) as TokenPayload;
             return { valid: true, decoded };
-        } catch (err) {
+        } catch {
             return { valid: false, error: 'Token 無效或已過期' };
         }
     }
@@ -44,17 +60,17 @@ export class AuthService {
         if (!check.valid) return { valid: false, error: check.error };
 
         try {
-            const decoded: any = check.decoded;
+            const decoded = check.decoded as TokenPayload;
             const stmt = this.db.prepare('SELECT role FROM users WHERE id = ?');
-            const row: any = stmt.get(decoded.id);
+            const row = stmt.get(decoded.id) as { role: string } | undefined;
 
             if (!row || row.role !== 'admin') {
                 return { valid: false, error: '權限不足，僅限管理員操作' };
             }
 
             return { valid: true, decoded };
-        } catch (err: any) {
-            return { valid: false, error: err.message };
+        } catch (err) {
+            return { valid: false, error: getErrorMessage(err) };
         }
     }
 
@@ -77,11 +93,12 @@ export class AuthService {
             );
             stmt.run(username, hashedPassword, securityQuestion, hashedAnswer);
             return { success: true };
-        } catch (err: any) {
-            if (err.message.includes('UNIQUE constraint failed')) {
+        } catch (err) {
+            const message = getErrorMessage(err);
+            if (message?.includes('UNIQUE constraint failed')) {
                 return { success: false, error: '此帳號已被註冊' };
             }
-            return { success: false, error: err.message };
+            return { success: false, error: message };
         }
     }
 
@@ -93,7 +110,7 @@ export class AuthService {
 
         try {
             const stmt = this.db.prepare('SELECT * FROM users WHERE username = ?');
-            const user: any = stmt.get(username);
+            const user = stmt.get(username) as UserRow | undefined;
 
             if (!user || !bcrypt.compareSync(password, user.password)) {
                 return { success: false, error: '帳號或密碼錯誤' };
@@ -110,8 +127,8 @@ export class AuthService {
                 token,
                 user: { id: user.id, username: user.username, role: user.role }
             };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: getErrorMessage(err) };
         }
     }
 
@@ -124,15 +141,15 @@ export class AuthService {
         }
         try {
             const stmt = this.db.prepare('SELECT security_question FROM users WHERE username = ?');
-            const user: any = stmt.get(username);
+            const user = stmt.get(username) as Pick<UserRow, 'security_question'> | undefined;
 
             if (!user) {
                 return { success: false, error: '找不到此帳號' };
             }
 
             return { success: true, question: user.security_question };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: getErrorMessage(err) };
         }
     }
 
@@ -144,7 +161,7 @@ export class AuthService {
 
         try {
             const stmt = this.db.prepare('SELECT * FROM users WHERE username = ?');
-            const user: any = stmt.get(username);
+            const user = stmt.get(username) as UserRow | undefined;
 
             if (!user) {
                 return { success: false, error: '找不到此帳號' };
@@ -160,8 +177,8 @@ export class AuthService {
             updateStmt.run(newHashedPassword, user.id);
 
             return { success: true };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: getErrorMessage(err) };
         }
     }
 }

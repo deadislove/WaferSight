@@ -3,6 +3,13 @@ import autoTable from 'jspdf-autotable';
 import fontUrl from '../../fonts/ChironGoRoundTC-VariableFont_wght.ttf'
 import i18n from '../../i18n';
 
+// jspdf-autotable augments the jsPDF instance with `lastAutoTable` at
+// runtime, but its type declarations don't expose that — declared here so
+// we can read the previous table's end position without an `any` cast.
+interface JsPDFWithAutoTable extends jsPDF {
+    lastAutoTable: { finalY: number };
+}
+
 class ExportServices {
     constructor() { }
 
@@ -36,7 +43,7 @@ class ExportServices {
    * @param data Array of objects to export
    * @param filename Download filename (default: export.csv)
    */
-    public exportCSV<T extends Record<string, any>>(data: T[], filename: string = 'export.csv'): void {
+    public exportCSV<T extends Record<string, unknown>>(data: T[], filename: string = 'export.csv'): void {
         if (!data || data.length === 0) return;
 
         const headers = Object.keys(data[0]);
@@ -66,7 +73,7 @@ class ExportServices {
      * @param itemTag Per-record element name (default: item)
      * @param filename Download filename (default: export.xml)
      */
-    public exportXML<T extends Record<string, any>>(
+    public exportXML<T extends Record<string, unknown>>(
         data: T[],
         filename: string = 'export.xml',
         rootTag: string = 'records',
@@ -102,7 +109,7 @@ class ExportServices {
      * @param filename Download filename (default: export.pdf)
      * @param title Title shown at the top of the table
      */
-    public async exportPDF<T extends Record<string, any>>(
+    public async exportPDF<T extends Record<string, unknown>>(
         data: T[],
         filename: string = 'export.pdf',
         title: string = i18n.t('exportPdf.genericTitle')
@@ -117,7 +124,12 @@ class ExportServices {
         doc.setFont('msjh');
 
         const headers = Object.keys(data[0]);
-        const body = data.map((row) => headers.map((header) => row[header] ?? ''));
+        const body: (string | number)[][] = data.map((row) =>
+            headers.map((header) => {
+                const val = row[header];
+                return typeof val === 'number' ? val : String(val ?? '');
+            })
+        );
 
         doc.setFontSize(16);
         doc.text(title, 14, 15);
@@ -219,7 +231,7 @@ class ExportServices {
                 headStyles: { fillColor: [30, 41, 59], font: 'msjh', fontStyle: 'normal' },
             });
 
-            const afterTableY = (doc as any).lastAutoTable.finalY + 10;
+            const afterTableY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 10;
 
             doc.setFontSize(12);
             doc.setTextColor(20);
@@ -233,7 +245,7 @@ class ExportServices {
                 headStyles: { fillColor: [30, 41, 59], font: 'msjh', fontStyle: 'normal' },
             });
 
-            afterParetoY = (doc as any).lastAutoTable.finalY + 10;
+            afterParetoY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 10;
         }
 
         if (simulationRuns && simulationRuns.length > 0) {

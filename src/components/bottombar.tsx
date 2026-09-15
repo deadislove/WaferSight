@@ -7,12 +7,9 @@ export default function BottomBar() {
   const [isOnline, setIsOnline] = useState<boolean>(true);
 
   useEffect(() => {
-    const api = (window as any).electronAPI;
-    if (api && api.onNetStatusChange) {
-      api.onNetStatusChange((status: boolean) => {
-        setIsOnline(status);
-      });
-    }
+    window.electronAPI?.onNetStatusChange((status) => {
+      setIsOnline(status);
+    });
   }, []);
 
   return (

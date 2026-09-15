@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3-multiple-ciphers';
 import dbInstance from '../infra/db';
 import { authService } from './authService';
+import { getErrorMessage } from '../infra/errorMessage';
 
 // Must match public/models/wafer-defect-classifier-labels.json's `classes`
 // order exactly — that file is a frozen, shipped model artifact (its class
@@ -24,6 +25,16 @@ export interface CalibrationMetric {
   retrainedAt: string;
   holdoutAccuracy: number;
   sampleCount: number;
+}
+
+interface CalibrationStateDbRow {
+  weights_json: string;
+  bias_json: string;
+  sample_count: number;
+  learning_rate: number;
+  l2_reg: number;
+  min_samples: number;
+  updated_at: string | null;
 }
 
 function softmax(logits: number[]): number[] {
@@ -51,7 +62,7 @@ export class ModelCalibrationService {
   }
 
   private readState(): CalibrationStateRow {
-    const row = this.db.prepare('SELECT * FROM calibration_state WHERE id = 1').get() as any;
+    const row = this.db.prepare('SELECT * FROM calibration_state WHERE id = 1').get() as CalibrationStateDbRow;
     return {
       weights: JSON.parse(row.weights_json),
       bias: JSON.parse(row.bias_json),
@@ -93,8 +104,8 @@ export class ModelCalibrationService {
         )
         .run(data.waferId, JSON.stringify(data.predictedProbs), data.predictedLabel, data.confirmedLabel);
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (err) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -126,8 +137,8 @@ export class ModelCalibrationService {
         .prepare('SELECT retrained_at as retrainedAt, holdout_accuracy as holdoutAccuracy, sample_count as sampleCount FROM calibration_metrics ORDER BY id ASC')
         .all() as CalibrationMetric[];
       return { success: true, data: { ...state, sampleCount: liveSampleCount, active, metrics: metricsRows } };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (err) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -154,8 +165,8 @@ export class ModelCalibrationService {
         .prepare('UPDATE calibration_state SET learning_rate = ?, l2_reg = ?, min_samples = ? WHERE id = 1')
         .run(learningRate, l2Reg, minSamples);
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (err) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -180,8 +191,8 @@ export class ModelCalibrationService {
       });
       runTransaction();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (err) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -218,8 +229,8 @@ export class ModelCalibrationService {
     const trainSet = examples.slice(0, examples.length - holdoutCount);
     const holdoutSet = examples.slice(examples.length - holdoutCount);
 
-    let W = state.weights.map((row) => [...row]);
-    let b = [...state.bias];
+    const W = state.weights.map((row) => [...row]);
+    const b = [...state.bias];
 
     const EPOCHS = 30;
     for (let epoch = 0; epoch < EPOCHS; epoch++) {

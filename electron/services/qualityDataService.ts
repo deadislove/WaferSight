@@ -2,6 +2,7 @@ import Database from 'better-sqlite3-multiple-ciphers';
 import dbInstance from '../infra/db';
 import { fetchLatestQualitySnapshot } from '../../src/mocks/api/qualityDataApi';
 import { authService } from './authService';
+import { getErrorMessage } from '../infra/errorMessage';
 
 // The shape produced by src/mocks/api/qualityDataApi.ts. This service
 // deliberately imports that fake-remote-fetch module directly rather than
@@ -86,9 +87,9 @@ export class QualityDataService {
         try {
             const snapshot = await fetchLatestQualitySnapshot();
             return this.saveSnapshot(snapshot);
-        } catch (err: any) {
+        } catch (err) {
             console.error('[QualityDataService] syncFromRemote failed:', err);
-            return { success: false, syncedAt: '', error: err.message };
+            return { success: false, syncedAt: '', error: getErrorMessage(err) };
         }
     }
 
@@ -143,9 +144,9 @@ export class QualityDataService {
         try {
             runTransaction(snapshot);
             return { success: true, syncedAt };
-        } catch (err: any) {
+        } catch (err) {
             console.error('[QualityDataService] saveSnapshot failed:', err);
-            return { success: false, syncedAt, error: err.message };
+            return { success: false, syncedAt, error: getErrorMessage(err) };
         }
     }
 

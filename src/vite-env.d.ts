@@ -58,6 +58,7 @@ export interface CalibrationStateData {
 }
 
 export interface ElectronAPI {
+  onNetStatusChange: (callback: (isOnline: boolean) => void) => void;
   getUsers: () => Promise<{ success: boolean; data?: ManagedUser[]; error?: string }>;
   createUser: (data: {
     username: string;

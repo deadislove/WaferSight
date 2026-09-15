@@ -4,7 +4,7 @@ interface RegisteredTask {
     fn: () => void | Promise<void>;
 }
 
-let registeredTasks: RegisteredTask[] = [];
+const registeredTasks: RegisteredTask[] = [];
 
 
 export function registerBackgroundWorker(task: () => void | Promise<void>) {

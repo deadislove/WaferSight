@@ -1,7 +1,7 @@
 // src/components/notificationBell.tsx
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNotifications } from '../contexts/notificationContext';
+import { useNotifications } from '../contexts/useNotifications';
 import { SEVERITY_DOT, SEVERITY_LABEL_KEY, SOURCE_LABEL_KEY } from '../constants/alertLabels';
 
 interface NotificationBellProps {

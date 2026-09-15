@@ -1,5 +1,6 @@
 import type { ManagedUser } from '../../vite-env';
 import i18n from '../../i18n';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 export interface UserListResult {
   success: boolean;
@@ -19,8 +20,8 @@ export async function getUsersService(): Promise<UserListResult> {
   try {
     const res = await window.electronAPI.getUsers();
     return res;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('userManage.loadListFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('userManage.loadListFailedGeneric') };
   }
 }
 
@@ -37,8 +38,8 @@ export async function createUserService(data: {
   try {
     const res = await window.electronAPI.createUser(data);
     return res;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('userManage.createFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('userManage.createFailedGeneric') };
   }
 }
 
@@ -53,8 +54,8 @@ export async function updateUserService(data: {
   try {
     const res = await window.electronAPI.updateUser(data);
     return res;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('userManage.updateFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('userManage.updateFailedGeneric') };
   }
 }
 
@@ -65,7 +66,7 @@ export async function deleteUserService(id: number): Promise<UserActionResult> {
   try {
     const res = await window.electronAPI.deleteUser(id);
     return res;
-  } catch (err: any) {
-    return { success: false, error: err.message || i18n.t('userManage.deleteFailedGeneric') };
+  } catch (err) {
+    return { success: false, error: getErrorMessage(err) || i18n.t('userManage.deleteFailedGeneric') };
   }
 }
