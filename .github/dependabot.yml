@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Non-major bumps are low-risk and noisy one-at-a-time; bundle them.
+      # Majors (React, Electron, Vite, etc.) stay as individual PRs since
+      # they're the ones actually likely to need code changes.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
